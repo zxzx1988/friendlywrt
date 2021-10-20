@@ -68,6 +68,17 @@ function disable_ipv6() {
 	uci commit dhcp
 }
 
+function init_lcd2usb() {
+	if [ -f /usr/bin/lcd2usb_echo ]; then
+		sed -i '/^exit 0.*/d' /etc/rc.local
+		cat >> /etc/rc.local <<EOL
+[ -f /usr/bin/lcd2usb_echo ] && (sleep 10 && /usr/bin/lcd2usb_echo)&
+exit 0
+EOL
+		/usr/bin/lcd2usb_echo&
+	fi
+}
+
 function init_system() {
 	uci -q batch <<-EOF
 		set system.@system[-1].hostname='$HOSTNAME'
@@ -182,6 +193,7 @@ if [ "${1,,}" = "all" ]; then
 	init_nft-qos
 	init_firewall_ipv6
 	init_firewall
+	init_lcd2usb
 	init_system
 	init_samba4
 	init_ttyd
