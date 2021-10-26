@@ -166,6 +166,25 @@ detect_mac80211() {
 		get_band_defaults "$dev"
 
 		path="$(iwinfo nl80211 path "$dev")"
+		if [ -x /usr/bin/readlink -a -h /sys/class/ieee80211/${dev} ]; then
+			product=`cat $(readlink -f /sys/class/ieee80211/${dev}/device)/uevent | grep PRODUCT= | cut -d= -f 2`
+			if [ -z "$product" ]; then
+				driver=`cat $(readlink -f /sys/class/ieee80211/${dev}/device)/uevent | grep DRIVER= | cut -d= -f 2`
+				# {{ added by friendlyelec
+				# hack for ax200/mt7921/rtl8822ce
+				case "${driver}" in
+				"iwlwifi" | \
+				"mt7921e" | \
+				"rtw_8822ce")
+					pci_id=`cat $(readlink -f /sys/class/ieee80211/${dev}/device)/uevent | grep PCI_ID= | cut -d= -f 2`
+					product="pcie-${driver}-${pci_id}"
+					;;
+				esac
+				# }}
+			fi
+		else
+			product=""
+		fi
 		macaddr="$(cat /sys/class/ieee80211/${dev}/macaddress)"
 
 		# work around phy rename related race condition
@@ -195,6 +214,69 @@ detect_mac80211() {
 				dev_id="set wireless.${name}.phy='$dev'"
 				;;
 		esac
+		
+		# {{ added by friendlyelec
+		[ -n "$htmode" ] && ht_capab="set wireless.${name}.htmode=$htmode"
+		case "${product}" in
+		"bda/b812/210" | \
+		"bda/c820/200")
+			mode_band='2g'
+			ht_capab="set wireless.${name}.htmode=HT20"
+			channel=7
+			country="set wireless.${name}.country='00'"
+			;;
+
+		# ax200
+		"pcie-iwlwifi-8086:2723")
+			mode_band='2g'
+			ht_capab="set wireless.${name}.htmode=HT40"
+			channel=7
+			country=""
+			cell_density="set wireless.${name}.cell_density='0'"
+			;;
+
+		# mt7921 (pcie & usb)
+		"pcie-mt7921e-14C3:7961" | \
+		"e8d/7961/100")
+			mode_band='5g'
+			ht_capab="set wireless.${name}.htmode=HE80"
+			channel=157
+			country="set wireless.${name}.country='CN'"
+			cell_density="set wireless.${name}.cell_density='0'"
+			;;
+
+		# rtl8822ce
+		"pcie-rtw_8822ce-10EC:C822")
+			mode_band='5g'
+			ht_capab="set wireless.${name}.htmode=VHT80"
+			channel=157
+			country="set wireless.${name}.country='CN'"
+			;;
+
+		"bda/8812/0")
+			country=""
+			;;
+
+		"bda/c811/200" | \
+		"e8d/7612/100")
+			country="set wireless.${name}.country='CN'"
+			;;
+
+		*)
+			country=""
+			;;
+
+		esac
+
+		ssid_suffix=$(cat /sys/class/ieee80211/${dev}/macaddress | cut -d':' -f1,2,6)
+		if [ -z ${ssid_suffix} -o ${ssid_suffix} = "00:00:00" ]; then
+			if [ -f /sys/class/net/eth0/address ]; then
+				ssid_suffix=$(cat /sys/class/net/eth0/address | cut -d':' -f1,2,6)
+			else
+				ssid_suffix="1234"
+			fi
+		fi
+		# }}
 
 		uci -q batch <<-EOF
 			set wireless.${name}=wifi-device
@@ -203,14 +285,17 @@ detect_mac80211() {
 			set wireless.${name}.channel=${channel}
 			set wireless.${name}.band=${mode_band}
 			set wireless.${name}.htmode=$htmode
-			set wireless.${name}.disabled=1
+			${ht_capab}
+			${country}
+			set wireless.${name}.disabled=0
 
 			set wireless.default_${name}=wifi-iface
 			set wireless.default_${name}.device=${name}
 			set wireless.default_${name}.network=lan
 			set wireless.default_${name}.mode=ap
-			set wireless.default_${name}.ssid=OpenWrt
-			set wireless.default_${name}.encryption=none
+			set wireless.default_${name}.ssid=FriendlyWrt-${ssid_suffix}
+			set wireless.default_${name}.encryption=psk2
+			set wireless.default_${name}.key=password
 EOF
 		uci -q commit wireless
 	done
