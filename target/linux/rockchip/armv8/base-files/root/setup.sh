@@ -48,9 +48,9 @@ function init_firewall() {
 
 	zone_name=$(uci -q get firewall.@zone[1].name)
 	if [ "$zone_name" = "wan" ]; then
-		uci set firewall.@zone[1].input='ACCEPT'
+		uci set firewall.@zone[1].input='REJECT'
 		uci set firewall.@zone[1].output='ACCEPT'
-		uci set firewall.@zone[1].forward='ACCEPT'
+		uci set firewall.@zone[1].forward='REJECT'
 	fi
 
 	uci commit firewall
@@ -100,6 +100,8 @@ function init_system() {
 	uci -q batch <<-EOF
 		set system.@system[-1].hostname='$HOSTNAME'
 		set system.@system[-1].ttylogin='1'
+		set system.@system[-1].timezone=CST-8
+		set system.@system[-1].zonename=Asia/Shanghai
 		commit system
 	EOF
 }
@@ -210,7 +212,6 @@ if [ "${1,,}" = "all" ]; then
 	init_nft-qos
 	init_firewall_ipv6
 	init_firewall
-	init_lcd2usb
 	init_system
 	init_samba4
 	init_ttyd
