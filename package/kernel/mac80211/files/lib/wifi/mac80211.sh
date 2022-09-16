@@ -162,6 +162,7 @@ detect_mac80211() {
 		channel=""
 		htmode=""
 		ht_capab=""
+		cell_density=""
 
 		get_band_defaults "$dev"
 
@@ -287,7 +288,8 @@ detect_mac80211() {
 			set wireless.${name}.htmode=$htmode
 			${ht_capab}
 			${country}
-			set wireless.${name}.disabled=0
+			${cell_density}
+			set wireless.${name}.disabled=1
 
 			set wireless.default_${name}=wifi-iface
 			set wireless.default_${name}.device=${name}
