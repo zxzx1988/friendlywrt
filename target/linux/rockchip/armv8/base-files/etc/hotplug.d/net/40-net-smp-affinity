@@ -29,6 +29,15 @@ set_interface_core() {
 	echo -n "${core_mask}" > /proc/irq/${irq}/smp_affinity
 }
 
+set_interface_rps() {
+	local core_mask="$1"
+	local interface="$2"
+
+	for d in /sys/class/net/${interface}/queues/rx-*; do
+		[ -d $d ] && echo "${core_mask}" > $d/rps_cpus
+	done
+}
+
 case "$(board_name)" in
 friendlyelec,nanopi-r2|\
 friendlyarm,nanopi-r2c|\
@@ -76,6 +85,8 @@ friendlyelec,nanopi-r6c)
 	set_interface_core 4 "eth1-16"
 	set_interface_core 4 "eth1-18"
 	echo fe > /sys/class/net/eth1/queues/rx-0/rps_cpus
+	set_interface_core 40 "xhci-hcd:usb3"
+	set_interface_rps "fe" "wlan0"
 	;;
 friendlyelec,nanopi-r6s)
 	set_interface_core 2 "eth0"
@@ -88,6 +99,8 @@ friendlyelec,nanopi-r6s)
 	set_interface_core 8 "eth2-16"
 	set_interface_core 8 "eth2-18"
 	echo fe > /sys/class/net/eth2/queues/rx-0/rps_cpus
+	set_interface_core 40 "xhci-hcd:usb3"
+	set_interface_rps "fe" "wlan0"
 	;;
 friendlyelec,nanopc-t6)
 	set_interface_core 8 "eth0-0"
@@ -98,6 +111,9 @@ friendlyelec,nanopc-t6)
 	set_interface_core 4 "eth1-16"
 	set_interface_core 4 "eth1-18"
 	echo fe > /sys/class/net/eth1/queues/rx-0/rps_cpus
+	set_interface_core 40 "xhci-hcd:usb5"
+	set_interface_core 40 "xhci-hcd:usb7"
+	set_interface_rps "fe" "wlan0"
 	;;
 esac
 
