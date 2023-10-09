@@ -133,6 +133,20 @@ function init_root_home() {
 	sed "s/^\(root.*\/\)ash/\1bash/g" /etc/passwd -i-
 }
 
+function init_root_vimrc() {
+	[ -f /root/.vimrc ] && return 0
+
+	cat > /root/.vimrc <<-EOF
+		version 8.0
+
+		set shiftwidth=4
+		set tabstop=4
+
+		set hlsearch
+		set incsearch
+	EOF
+}
+
 function init_button() {
 	local CONF=/etc/triggerhappy/triggers.d/example.conf
 	grep "BTN_1" ${CONF} >/dev/null && return 0
@@ -176,6 +190,7 @@ if [ "${1,,}" = "all" ]; then
 	init_openssh
 	init_theme
 	init_root_home
+	init_root_vimrc
 	init_button
 	clean_fstab
 fi
