@@ -201,6 +201,18 @@ function clean_fstab() {
 	uci commit fstab
 }
 
+function update_ntp_server() {
+	local def_pool="openwrt.pool.ntp.org"
+
+	[ "$(uci -q get ntpclient.@ntpserver[0].hostname)" = "0.${def_pool}" ] && \
+		uci set ntpclient.@ntpserver[0].hostname="time.apple.com"
+	[ "$(uci -q get ntpclient.@ntpserver[1].hostname)" = "1.${def_pool}" ] && \
+		uci set ntpclient.@ntpserver[1].hostname="ntp.tencent.com"
+	[ "$(uci -q get ntpclient.@ntpserver[2].hostname)" = "2.${def_pool}" ] && \
+		uci set ntpclient.@ntpserver[2].hostname="time.cloudflare.com"
+	uci commit ntpclient
+}
+
 # ---------------------------------------------------------
 # Refer: package/network/services/odhcpd/files/odhcpd.defaults
 
@@ -236,5 +248,6 @@ if [ "${1,,}" = "all" ]; then
 	init_root_vimrc
 	init_button
 	clean_fstab
+	update_ntp_server
 fi
 
