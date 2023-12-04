@@ -262,16 +262,6 @@ detect_mac80211() {
 			cell_density="set wireless.${name}.cell_density='0'"
 			;;
 
-		# mt7921 (pcie & usb)
-		"pcie-mt7921e-14C3:7961" | \
-		"e8d/7961/100")
-			mode_band='5g'
-			ht_capab="set wireless.radio${devidx}.htmode=HE80"
-			channel=157
-			country="set wireless.radio${devidx}.country='CN'"
-			cell_density="set wireless.radio${devidx}.cell_density='0'"
-			;;
-
 		# rtl8822ce
 		"pcie-rtw_8822ce-10EC:C822")
 			mode_band='5g'
