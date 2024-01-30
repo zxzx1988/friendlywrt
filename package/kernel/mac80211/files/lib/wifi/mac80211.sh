@@ -177,7 +177,7 @@ detect_mac80211() {
 				case "${driver}" in
 				"iwlwifi" | \
 				"mt7921e" | \
-				"rtw_8822ce")
+				"rtw_8822ce" | "rtl88x2ce")
 					pci_id=`cat $(readlink -f /sys/class/ieee80211/${dev}/device)/uevent | grep PCI_ID= | cut -d= -f 2`
 					product="pcie-${driver}-${pci_id}"
 					;;
@@ -232,9 +232,10 @@ detect_mac80211() {
 			country="set wireless.${name}.country='00'"
 			;;
 
-		# rtl88x2bu / rtl88x2cs
+		# rtl88x2bu / rtl88x2cs / rtl88x2ce
 		"bda/b82c/210" | \
-		"sdio-rtl88x2cs-024C:C822")
+		"sdio-rtl88x2cs-024C:C822" | \
+		"pcie-rtl88x2ce-10EC:C822")
 			mode_band='5g'
 			ht_capab="set wireless.${name}.htmode=VHT80"
 			rx_stbc="set wireless.${name}.rx_stbc='0'"
